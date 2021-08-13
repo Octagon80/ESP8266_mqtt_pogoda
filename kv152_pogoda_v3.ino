@@ -113,10 +113,19 @@
 //но не так часто, как выполняется основной цикл Ardino
 //Одновременно датчик движения требуется также достаточно часто опрашивать, чтобы
 //он как можно быстро реагировал на присутствие человека
-#define DELAY_MQTT 1000
+#define DELAY_MQTT 1000      //сек * 1000
 
 //Пауза с мс между опросами датчиков погоды (погода не моментально меняет показания)
-#define DELAY_POGODA 25000
+#define DELAY_POGODA 120000 //сек * 1000
+
+
+//Текущее время паузы между операциями
+//Зададим начальное значение такое, чтобы после включения устройства произошла отправка данных на сервер
+//Замечание. Время должно установиться в тот момент, когда произойдет успешное подключение к MQTT 
+unsigned long  cdelay_mqtt   = 0;
+unsigned long  cdelay_pogoda = 0;
+
+
 
 
 #if USE_MQTT
@@ -130,7 +139,6 @@
   //Найстройка Wifi роутера
   const char* ssid     = WIFISSID;
   const char* password = WIFIPASSWORD;
-
 
 #if INARDUINO
   #include <Arduino.h>
@@ -441,6 +449,11 @@ void mqtt_reconnect() {
         displayConnectStatus(1, STATE_ONLINE );
         //once connected to MQTT broker, subscribe command if any
         client.subscribe(MQTT_TOPIC_IN);
+
+        //Стимулируем принудительное переопрос сенсоров с отправкой значений на сервер.
+        cdelay_mqtt   = DELAY_MQTT;
+        cdelay_pogoda = DELAY_POGODA;
+
       } else {
        #if DEBUG
          Serial.print("failed, rc=");
@@ -543,11 +556,13 @@ float humd = myHumidity.readHumidity();
 float temp = myHumidity.readTemperature();
 
 
-if( abs( HTU21D_HumOld - humd ) > 0.1 ){
+//if( abs( HTU21D_HumOld - humd ) > 0.1 )
+{
   mqtt_publish_float(MQTT_TOPIC_HUM_VAL,  humd);
   mqtt_publish_int(MQTT_TOPIC_HUM_TIME, millis() );
 }
-if( abs( HTU21D_TempOld - temp ) > 0.1 ){
+//if( abs( HTU21D_TempOld - temp ) > 0.1 )
+{
   mqtt_publish_float(MQTT_TOPIC_TEMP_VAL, temp);
   mqtt_publish_int(MQTT_TOPIC_TEMP_TIME, millis() );
 }
@@ -587,11 +602,13 @@ void BMPUpdate(){
    if( BmpIsValid ){
     float pressVal = BMP.readPressure() / 100.0F * 0.7500638;
     float temp = BMP.readTemperature();
-    if( abs( BMP_PressOld - pressVal ) > 0.1 ){
+   // if( abs( BMP_PressOld - pressVal ) > 0.1 )
+    {
       mqtt_publish_float(MQTT_TOPIC_BMP_PRESS_VAL,  pressVal);
       mqtt_publish_int(MQTT_TOPIC_BMP_PRESS_TIME,  millis() );
     }
-    if( abs( BMP_TempOld - temp ) > 0.1 ){
+   // if( abs( BMP_TempOld - temp ) > 0.1 )
+    {
       mqtt_publish_float(MQTT_TOPIC_BMP_TEMP_VAL, temp);
       mqtt_publish_int(MQTT_TOPIC_BMP_TEMP_TIME , millis() );
     }
@@ -715,9 +732,6 @@ return;
 
 
 
- 
-unsigned long  cdelay_mqtt   = DELAY_MQTT;
-unsigned long  cdelay_pogoda = DELAY_POGODA;
 
 
 /**
