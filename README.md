@@ -21,4 +21,4 @@
   - При отображении строки температуры, влажности и давления не стирается старая строка, новая пишется поверх. Если новая строка короче старой, старые символы видны в конце строки. 
 
 
-[![Схема](https://raw.githubusercontent.com/Octagon80/ESP8266_mqtt_pogoda/main/Schematic_kv152-weather_station.png  "Схема")
+![Схема](https://raw.githubusercontent.com/Octagon80/ESP8266_mqtt_pogoda/main/Schematic_kv152-weather_station.png  "Схема")
